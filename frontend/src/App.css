@@ -1,42 +1,209 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+:root {
+  --bg-color: #121212;
+  --card-bg: #1e1e1e;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --accent: #00d67d; 
+  --accent-hover: #00b86b;
+  --danger: #ff4d4d;
+  --input-bg: #2c2c2c;
+  --border: #333;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+body {
+  margin: 0;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  
+  /* Layout Base: Start left, but allow children to fill width */
+  display: flex;
+  justify-content: flex-start;
+  
+  min-height: 100vh;
+  padding-top: 50px;
+  overflow-x: hidden;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* FIX: Ensure container fills width so we can center things inside it */
+.container {
+  width: 100%;
+  padding: 0 40px; 
+  box-sizing: border-box;
 }
 
+/* --- Login Screen --- */
+.login-wrapper {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 50%;
+  display: flex;
+  justify-content: center; 
+  align-items: flex-center; 
+  padding-top: 200px;
+}
+
+h1 {
+  text-align: left; 
+  color: var(--accent);
+  margin-bottom: 30px;
+  font-size: 1.8rem;
+}
+
+/* --- Cards --- */
 .card {
-  padding: 2em;
+  background-color: var(--card-bg);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border);
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto; 
 }
 
-.read-the-docs {
-  color: #888;
+/* --- Forms & Inputs --- */
+.form-group { display: flex; flex-direction: column; gap: 15px; }
+.input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+
+input {
+  background-color: var(--input-bg);
+  border: 1px solid var(--border);
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box; 
+  transition: border-color 0.2s;
 }
+input:focus { outline: none; border-color: var(--accent); }
+
+/* --- Buttons --- */
+button {
+  cursor: pointer;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+.btn-primary { background-color: var(--accent); color: #121212; width: 100%; }
+.btn-add { background-color: var(--accent); color: #121212; }
+
+/* Logout Button */
+.btn-logout {
+  position: fixed;
+  top: 20px;
+  right: 30px;
+  z-index: 1000;
+  background: rgba(0,0,0,0.6);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(5px);
+}
+.btn-logout:hover { background: var(--accent); color: black; }
+button:hover { opacity: 0.9; }
+
+/* --- Task Items --- */
+ul { list-style: none; padding: 0; margin-top: 20px; }
+.task-item {
+  display: flex; justify-content: space-between; align-items: center;
+  background-color: #252525; padding: 15px; margin-bottom: 10px;
+  border-radius: 8px; border-left: 4px solid var(--accent);
+  transition: transform 0.1s;
+}
+.task-item:hover { transform: translateX(5px); }
+.task-title { font-size: 1rem; }
+.btn-delete { background-color: transparent; color: var(--danger); padding: 5px; }
+.btn-delete:hover { background-color: rgba(255, 77, 77, 0.1); }
+
+/* --- CSS GRID LAYOUT --- */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 350px minmax(0, 1fr);
+  gap: 40px; 
+  width: 100%;
+  height: 80vh; 
+}
+
+/* 1. Manager Section */
+.manager-section {
+  background-color: #232323; 
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 5px 0 20px rgba(0,0,0,0.6);
+  overflow-y: auto;
+  height: 100%;
+}
+.manager-section::-webkit-scrollbar { display: none; }
+
+
+/* 2. Team Carousel Section */
+.team-section-wrapper {
+  position: relative; 
+  height: 100%;
+  overflow: hidden; 
+}
+
+.team-scroll-container {
+  display: flex;
+  gap: 20px;
+  
+  overflow-x: auto; 
+  scroll-behavior: smooth;
+  
+  padding: 5px 5px 20px 5px;
+  width: 100%;
+  height: 100%;
+  align-items: flex-start;
+  
+  scrollbar-width: thin; 
+  scrollbar-color: #444 #1a1a1a;
+}
+.team-scroll-container::-webkit-scrollbar { height: 8px; }
+.team-scroll-container::-webkit-scrollbar-track { background: #1a1a1a; }
+.team-scroll-container::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+.team-scroll-container::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Team Cards */
+.team-card {
+  background-color: var(--card-bg);
+  min-width: 320px;
+  max-width: 320px;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+}
+.team-card h3 {
+  margin-top: 0; border-bottom: 2px solid #444; padding-bottom: 10px;
+  display: flex; justify-content: space-between;
+}
+
+/* --- ARROWS --- */
+.scroll-btn {
+  position: absolute;
+  top: 50%; 
+  transform: translateY(-50%);
+  z-index: 50;
+  width: 50px; height: 50px;
+  border-radius: 50%; border: 1px solid #555;
+  background: rgba(17, 17, 17, 0.95); 
+  color: white;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+  transition: all 0.2s;
+}
+.scroll-btn:hover {
+  background: var(--accent); color: black; border-color: var(--accent);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.scroll-left { left: 10px; }
+.scroll-right { right: 10px; }

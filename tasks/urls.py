@@ -1,13 +1,12 @@
-# tasks/urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import TaskViewSet
+from .views import TaskViewSet, UserRegistrationView, AdminUserViewSet
 
-# Create a router and register our ViewSet with it.
 router = DefaultRouter()
 router.register(r'tasks', TaskViewSet, basename='task')
+router.register(r'users', AdminUserViewSet, basename='users')
 
-# The API URLs are now determined automatically by the router.
 urlpatterns = [
     path('', include(router.urls)),
+    path('register/', UserRegistrationView.as_view(), name='register'),
 ]

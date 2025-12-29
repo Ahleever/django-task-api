@@ -16,11 +16,28 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework.authtoken.views import obtain_auth_token
+from django.views.generic import RedirectView
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
+
+class CustomAuthToken(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user_id': user.pk,
+            'username': user.username,
+            'is_staff': user.is_staff  
+        })
 
 urlpatterns = [
+    path('', RedirectView.as_view(url='admin/', permanent=False)),
     path('admin/', admin.site.urls),
     path('api/', include('tasks.urls')),
     path('api-auth/', include('rest_framework.urls')),
-    path('api-token-auth/', obtain_auth_token),
+    path('api-token-auth/', CustomAuthToken.as_view()),
 ]

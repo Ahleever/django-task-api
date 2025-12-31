@@ -11,26 +11,21 @@ from django.shortcuts import get_object_or_404
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated] 
-
-    # Users can only see their own tasks, and they are ordered by creation date
     def get_queryset(self):
         user = self.request.user
-        
-        # Default: You see your own tasks
-        queryset = Task.objects.filter(owner=user)
-
+        queryset = Task.objects.filter(user=user)
         # Check if the user is a team manager
         if hasattr(user, 'managed_team'):
             team = user.managed_team
             members = team.members.all()
-            team_tasks = Task.objects.filter(owner__in=members)
+            team_tasks = Task.objects.filter(user__in=members)
             queryset = queryset | team_tasks
 
         return queryset.distinct()
 
-    # When creating a new task, set the owner to the current user
+    # When creating a new task, set the user to the current user
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        serializer.save(user=self.request.user)
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()

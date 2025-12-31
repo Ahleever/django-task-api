@@ -1,21 +1,32 @@
+# tasks/serializers.py
 from rest_framework import serializers
 from .models import Task
 from django.contrib.auth.models import User
 
 class TaskSerializer(serializers.ModelSerializer):
-    username = serializers.ReadOnlyField(source='owner.username')
+    username = serializers.ReadOnlyField(source='user.username')
     assign_to = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = Task
-        fields = ['id', 'title', 'description', 'is_complete', 'created_at', 'username', 'assign_to']
+        fields = [
+            'id', 
+            'title', 
+            'is_complete', 
+            'created_at', 
+            'username', 
+            'assign_to',
+            'description', 
+            'due_date', 
+            'priority'
+        ]
 
     def update(self, instance, validated_data):
         new_owner_username = validated_data.pop('assign_to', None)
         if new_owner_username:
             try:
                 user = User.objects.get(username=new_owner_username)
-                instance.owner = user
+                instance.user = user  
             except User.DoesNotExist:
                 raise serializers.ValidationError({"assign_to": "User not found."})
 

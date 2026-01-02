@@ -303,7 +303,7 @@ function App() {
     const passToUse = passOverride || password
 
     try {
-      const response = await axios.post('${API_URL}/api-token-auth/', {
+      const response = await axios.post(API_URL + '/api-token-auth/', {
         username: userToUse,
         password: passToUse
       })
@@ -325,7 +325,7 @@ function App() {
   const handleRegister = async (e) => {
     e.preventDefault()
     try {
-      await axios.post('${API_URL}/api/register/', { username, password })
+      await axios.post(API_URL + '/api/register/', { username, password })
       alert("Registration successful! Logging you in...")
       handleLogin(null, username, password)
     } catch (error) {
@@ -334,8 +334,68 @@ function App() {
     }
   }
 
-  const handleGuestLogin = () => {
-    handleLogin(null, 'Demo', 'Password123')
+  const handleGuestLogin = async () => {
+    const demoManager = "GuestManager";
+    const demoPass = "DemoPass123";
+    const emp1 = "DemoAlice";
+    const emp2 = "DemoBob";
+
+    const createEmployeeWithTasks = async (username, tasks) => {
+      try {
+        await axios.post(API_URL + '/api/register/', { username, password: demoPass });
+        const res = await axios.post(API_URL + '/api-token-auth/', { username, password: demoPass });
+        const token = res.data.token;
+        for (const task of tasks) {
+            await axios.post(API_URL + '/api/tasks/', task, { headers: { 'Authorization': `Token ${token}` } });
+        }
+        return token;
+      } catch (err) {
+        console.log(`${username} likely exists already.`);
+      }
+    };
+
+    try {
+      await axios.post(API_URL + '/api-token-auth/', { username: demoManager, password: demoPass });
+      handleLogin(null, demoManager, demoPass);
+
+    } catch (error) {
+      console.log("Seeding Demo Data...");
+      alert("Setting up the Demo Team... this takes about 5 seconds.");
+
+      try {
+        await createEmployeeWithTasks(emp1, [
+            { title: "Design Homepage", priority: "High", due_date: new Date().toISOString().split('T')[0] },
+            { title: "Fix Navbar Bug", priority: "Medium" }
+        ]);
+
+        await createEmployeeWithTasks(emp2, [
+            { title: "Database Migration", priority: "High" },
+            { title: "Write API Docs", priority: "Low" }
+        ]);
+
+        await axios.post(API_URL + '/api/register/', { username: demoManager, password: demoPass });
+        const res = await axios.post(API_URL + '/api-token-auth/', { username: demoManager, password: demoPass });
+        const managerToken = res.data.token;
+        const managerConfig = { headers: { 'Authorization': `Token ${managerToken}` } };
+
+        await axios.post(API_URL + '/api/tasks/', { 
+            title: "Review Q1 Goals", priority: "High", description: "Check Alice's designs." 
+        }, managerConfig);
+
+        try {
+             await axios.post(API_URL + '/api/users/assign_manager/', { member: emp1, manager: demoManager }, managerConfig);
+             await axios.post(API_URL + '/api/users/assign_manager/', { member: emp2, manager: demoManager }, managerConfig);
+        } catch (assignError) {
+             console.warn("Assignment warning:", assignError);
+        }
+
+        handleLogin(null, demoManager, demoPass);
+
+      } catch (setupError) {
+        console.error("Demo setup failed:", setupError);
+        alert("Could not auto-seed data. Please try registering manually.");
+      }
+    }
   }
 
   const logout = () => {
@@ -346,7 +406,7 @@ function App() {
   // 3. API & INIT
   const fetchTasks = () => {
     if (token) {
-      axios.get('${API_URL}/api/tasks/', {
+      axios.get(API_URL + '/api/tasks/', {
         headers: { 'Authorization': `Token ${token}` }
       })
       .then(res => setTasks(res.data))
@@ -355,7 +415,7 @@ function App() {
   }
 
   const fetchAllUsers = () => {
-    axios.get('${API_URL}/api/users/', {
+    axios.get(API_URL + '/api/users/', {
       headers: { 'Authorization': `Token ${token}` }
     })
     .then(res => setAllUsers(res.data))
@@ -378,7 +438,7 @@ function App() {
   const handleAdminCreateUser = async (e) => {
     e.preventDefault()
     try {
-        await axios.post('${API_URL}/api/users/', 
+        await axios.post(API_URL + '/api/users/', 
             { username: newUserName, password: newUserPass },
             { headers: { 'Authorization': `Token ${token}` }}
         )
@@ -390,7 +450,7 @@ function App() {
 
   const handleAssignManager = async (member, manager) => {
       try {
-          await axios.post('${API_URL}/api/users/assign_manager/', 
+          await axios.post(API_URL + '/api/users/assign_manager/', 
             { member, manager },
             { headers: { 'Authorization': `Token ${token}` }}
           )
@@ -414,7 +474,7 @@ function App() {
     e.preventDefault()
     if (!newTask) return
     try {
-      await axios.post('${API_URL}/api/tasks/', 
+      await axios.post(API_URL + '/api/tasks/', 
         { title: newTask }, 
         { headers: { 'Authorization': `Token ${token}` }}
       )

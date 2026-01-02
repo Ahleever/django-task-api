@@ -141,12 +141,14 @@ REST_FRAMEWORK = {
 }
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://django-task-manager-rh8u.onrender.com",
-    "https://django-task-api.vercel.app" 
+    'https://django-task-manager-rh8u.onrender.com',
+    'https://django-task-api.vercel.app', 
+    'https://tasks.olivermontero.dev',
 ]
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://localhost:5173',
     'https://django-task-api.vercel.app', 
+    'https://tasks.olivermontero.dev',
 ]

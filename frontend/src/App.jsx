@@ -26,7 +26,6 @@ const DraggableTask = ({ id, children }) => {
 };
 
 const DroppableArea = ({ id, children, className }) => {
-  // FIX: Removed the typo here. It is now safe.
   const { setNodeRef, isOver } = useDroppable({
     id: id || 'unassigned', 
   });
@@ -49,8 +48,59 @@ const DroppableArea = ({ id, children, className }) => {
 
 // --- 2. SUB-COMPONENTS ---
 
+const EmployeeSidebar = ({ tasks }) => {
+    // Calculate Stats
+    const totalTasks = tasks.length;
+    const highPriority = tasks.filter(t => t.priority === 'High').length;
+    
+    // Calculate Upcoming Deadlines
+    const dueSoon = tasks
+      .filter(t => t.due_date) // Check for due_date
+      .sort((a, b) => new Date(a.due_date) - new Date(b.due_date)) // Sort ascending
+      .slice(0, 3); // Take top 3
+  
+    return (
+      <div className="manager-section" style={{ height: '100%', minHeight: '300px' }}>
+        <h2 style={{ marginTop: 0 }}>📊 Performance</h2>
+        
+        {/* Stat Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+          <div style={{ background: '#333', padding: '15px', borderRadius: '8px', textAlign: 'center' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{totalTasks}</div>
+            <div style={{ fontSize: '0.8rem', color: '#aaa' }}>Active Tasks</div>
+          </div>
+          <div style={{ background: '#333', padding: '15px', borderRadius: '8px', textAlign: 'center' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--accent)' }}>{highPriority}</div>
+            <div style={{ fontSize: '0.8rem', color: '#aaa' }}>High Priority</div>
+          </div>
+        </div>
+  
+        {/* Upcoming Deadlines */}
+        <h3 style={{ borderBottom: '1px solid #444', paddingBottom: '10px' }}>📅 Upcoming Deadlines</h3>
+        {dueSoon.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {dueSoon.map(task => (
+              <div key={task.id} style={{ background: '#222', padding: '10px', borderRadius: '6px', borderLeft: '3px solid var(--accent)' }}>
+                <div style={{ fontWeight: 'bold' }}>{task.title}</div>
+                <div style={{ fontSize: '0.8rem', color: '#888' }}>Due: {task.due_date}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ color: '#666', fontStyle: 'italic' }}>No upcoming deadlines set.</p>
+        )}
+        
+        <div style={{ marginTop: '30px', padding: '15px', background: 'rgba(100, 108, 255, 0.1)', borderRadius: '8px', border: '1px dashed var(--accent)' }}>
+          <h4 style={{ margin: '0 0 5px 0', color: 'var(--accent)' }}>💡 Dev Note</h4>
+          <p style={{ fontSize: '0.85rem', margin: 0, color: '#ccc' }}>
+            This view is personalized for individual contributors. Managers see the team overview carousel here.
+          </p>
+        </div>
+      </div>
+    );
+};
+
 const TaskList = ({ taskList, ownerName, actions }) => { 
-    // Destructure actions to keep the code clean
     const { startEditing, handleDeleteTask, handleToggleTask, openModal, saveEdit, editingTaskId, editingText, setEditingText } = actions;
 
     const getPriorityColor = (p) => {
@@ -462,7 +512,9 @@ function App() {
 
   // --- RENDER ---
   const { myTasks, teamGroups } = getGroupedTasks()
-  const isEmployee = !isAdmin;  return (
+  const isEmployee = !isAdmin;  
+
+  return (
     <div className="container">
       {!token ? (
         // --- LOGIN SCREEN ---
@@ -511,27 +563,32 @@ function App() {
                 <div className="card" style={{ marginBottom: '30px', border: '1px solid var(--accent)', maxWidth: '100%' }}>
                   <h2>⚙️ Admin Control Center</h2>
                   <div style={{ display: 'flex', gap: '40px', flexWrap: 'wrap' }}>
-                    {/* ... (Your Admin Form Code is fine, keeping it brief here) ... */}
+                    
                     <div style={{ flex: 1, maxWidth: '200px' }}>
                       <h3>Add New User</h3>
                       <form onSubmit={handleAdminCreateUser} className="form-group">
-                         {/* ... Inputs ... */}
-                         <input type="text" placeholder="Username" value={newUserName} onChange={e=>setNewUserName(e.target.value)} />
-                         {/* ... Password Input logic ... */}
-                         <input type="password" placeholder="Password" value={newUserPass} onChange={e=>setNewUserPass(e.target.value)} />
-                         <button type="submit" className="btn-add">Create User</button>
+                          <input type="text" placeholder="Username" value={newUserName} onChange={e=>setNewUserName(e.target.value)} />
+                          <div style={{position: 'relative'}}>
+                             <input 
+                                type={showPassword ? "text" : "password"} 
+                                placeholder="Password" 
+                                value={newUserPass} 
+                                onChange={e=>setNewUserPass(e.target.value)} 
+                             />
+                             <button type="button" onClick={() => setShowPassword(!showPassword)} style={{position:'absolute', right:'5px', top:'25%', background:'transparent', border:'none', cursor:'pointer'}}>
+                                {showPassword ? "🙈" : "👁️"}
+                             </button>
+                          </div>
+                          <button type="submit" className="btn-add">Create User</button>
                       </form>
                     </div>
                     
                     <div style={{ flex: 1, minWidth: '300px' }}>
                       <h3>Team Assignments</h3>
-                      {/* ... Your Table Code ... */}
                       <table style={{width:'100%', borderCollapse:'collapse'}}>
-                           {/* ... Table Body ... */}
                            <tbody>
                               {allUsers.map(u => (
                                 <tr key={u.id}>
-                                   {/* ... Table Cells ... */}
                                    <td>{u.username}</td>
                                    <td>
                                      <select value={u.is_staff ? 'Manager' : 'Employee'} onChange={(e) => handleRoleChange(u.id, e.target.value)}>
@@ -539,7 +596,18 @@ function App() {
                                        <option value="Manager">Manager</option>
                                      </select>
                                    </td>
-                                   {/* ... etc ... */}
+                                   <td>
+                                     <select 
+                                        onChange={(e) => handleAssignManager(u.username, e.target.value)} 
+                                        value=""
+                                        style={{maxWidth: '150px'}}
+                                     >
+                                        <option value="" disabled>Assign Manager...</option>
+                                        {allUsers.map(m => m.is_staff && m.username !== u.username && (
+                                            <option key={m.id} value={m.username}>{m.username}</option>
+                                        ))}
+                                     </select>
+                                   </td>
                                 </tr>
                               ))}
                            </tbody>
@@ -550,8 +618,13 @@ function App() {
               )}
 
               {/* --- DASHBOARD GRID LAYOUT --- */}
-              <div className="dashboard-layout">
-                {/* LEFT BOX: MANAGER */}
+              <div className="dashboard-layout" style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '20px', 
+                alignItems: 'start' 
+              }}>
+                {/* LEFT BOX: MANAGER / MY TASKS */}
                 <div className="manager-section">
                   <h2 style={{ marginTop: 0 }}>⚡ My Tasks</h2>
                   <form onSubmit={handleCreateTask} className="input-group" style={{ marginBottom: '15px' }}>
@@ -561,23 +634,31 @@ function App() {
                   <TaskList taskList={myTasks} ownerName={currentUser || 'unassigned'} actions={taskActions} />
                 </div>
 
-                {/* RIGHT BOX: TEAM CAROUSEL */}
-                <div className="team-section-wrapper">
-                  <button className="scroll-btn scroll-left" onClick={() => scrollBoard('left')}>◀</button>
-                  <div className="team-scroll-container" ref={boardRef}>
-                    {Object.keys(teamGroups).map(user => (
-                      <div key={user} className="team-card">
-                        <h3>
-                          <span>👤 {user}</span>
-                          <span style={{ fontSize: '0.8rem', opacity: 0.7, background: '#333', padding: '2px 6px', borderRadius: '4px' }}>
-                            {teamGroups[user].length}
-                          </span>
-                        </h3>
-                        <TaskList taskList={teamGroups[user]} ownerName={user} actions={taskActions} />
-                      </div>
-                    ))}
-                  </div>
-                  <button className="scroll-btn scroll-right" onClick={() => scrollBoard('right')}>▶</button>
+                {/* RIGHT BOX: VARIES BY ROLE */}
+                <div className="team-section-wrapper" style={{ width: '100%', overflow: 'hidden' }}>
+                  {isAdmin ? (
+                      // --- ADMIN: SHOW TEAM CAROUSEL ---
+                      <>
+                        <button className="scroll-btn scroll-left" onClick={() => scrollBoard('left')}>◀</button>
+                        <div className="team-scroll-container" ref={boardRef}>
+                            {Object.keys(teamGroups).map(user => (
+                            <div key={user} className="team-card">
+                                <h3>
+                                <span>👤 {user}</span>
+                                <span style={{ fontSize: '0.8rem', opacity: 0.7, background: '#333', padding: '2px 6px', borderRadius: '4px' }}>
+                                    {teamGroups[user].length}
+                                </span>
+                                </h3>
+                                <TaskList taskList={teamGroups[user]} ownerName={user} actions={taskActions} />
+                            </div>
+                            ))}
+                        </div>
+                        <button className="scroll-btn scroll-right" onClick={() => scrollBoard('right')}>▶</button>
+                      </>
+                  ) : (
+                      // --- EMPLOYEE: SHOW STATS SIDEBAR ---
+                      <EmployeeSidebar tasks={myTasks} />
+                  )}
                 </div>
               </div>
 

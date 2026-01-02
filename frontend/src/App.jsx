@@ -231,6 +231,8 @@ const TaskModal = ({ selectedTask, draftDesc, setDraftDesc, draftPriority, setDr
     )
 }
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
 // --- 3. MAIN APP COMPONENT ---
 function App() {
   const [username, setUsername] = useState('')
@@ -301,7 +303,7 @@ function App() {
     const passToUse = passOverride || password
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api-token-auth/', {
+      const response = await axios.post('${API_URL}/api-token-auth/', {
         username: userToUse,
         password: passToUse
       })
@@ -323,7 +325,7 @@ function App() {
   const handleRegister = async (e) => {
     e.preventDefault()
     try {
-      await axios.post('http://127.0.0.1:8000/api/register/', { username, password })
+      await axios.post('${API_URL}/api/register/', { username, password })
       alert("Registration successful! Logging you in...")
       handleLogin(null, username, password)
     } catch (error) {
@@ -344,7 +346,7 @@ function App() {
   // 3. API & INIT
   const fetchTasks = () => {
     if (token) {
-      axios.get('http://127.0.0.1:8000/api/tasks/', {
+      axios.get('${API_URL}/api/tasks/', {
         headers: { 'Authorization': `Token ${token}` }
       })
       .then(res => setTasks(res.data))
@@ -353,7 +355,7 @@ function App() {
   }
 
   const fetchAllUsers = () => {
-    axios.get('http://127.0.0.1:8000/api/users/', {
+    axios.get('${API_URL}/api/users/', {
       headers: { 'Authorization': `Token ${token}` }
     })
     .then(res => setAllUsers(res.data))
@@ -376,7 +378,7 @@ function App() {
   const handleAdminCreateUser = async (e) => {
     e.preventDefault()
     try {
-        await axios.post('http://127.0.0.1:8000/api/users/', 
+        await axios.post('${API_URL}/api/users/', 
             { username: newUserName, password: newUserPass },
             { headers: { 'Authorization': `Token ${token}` }}
         )
@@ -388,7 +390,7 @@ function App() {
 
   const handleAssignManager = async (member, manager) => {
       try {
-          await axios.post('http://127.0.0.1:8000/api/users/assign_manager/', 
+          await axios.post('${API_URL}/api/users/assign_manager/', 
             { member, manager },
             { headers: { 'Authorization': `Token ${token}` }}
           )
@@ -399,7 +401,7 @@ function App() {
   const handleRoleChange = async (userId, newRole) => {
       const isManager = newRole === 'Manager';
       try {
-          await axios.patch(`http://127.0.0.1:8000/api/users/${userId}/`, 
+          await axios.patch(`${API_URL}/api/users/${userId}/`, 
             { is_staff: isManager },
             { headers: { 'Authorization': `Token ${token}` }}
           )
@@ -412,7 +414,7 @@ function App() {
     e.preventDefault()
     if (!newTask) return
     try {
-      await axios.post('http://127.0.0.1:8000/api/tasks/', 
+      await axios.post('${API_URL}/api/tasks/', 
         { title: newTask }, 
         { headers: { 'Authorization': `Token ${token}` }}
       )
@@ -423,7 +425,7 @@ function App() {
 
   const handleDeleteTask = async (id) => {
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/tasks/${id}/`, {
+      await axios.delete(`${API_URL}/api/tasks/${id}/`, {
         headers: { 'Authorization': `Token ${token}` }
       })
       fetchTasks()
@@ -432,7 +434,7 @@ function App() {
 
   const handleToggleTask = async (id, currentStatus) => {
     try {
-      await axios.patch(`http://127.0.0.1:8000/api/tasks/${id}/`, 
+      await axios.patch(`${API_URL}/api/tasks/${id}/`, 
         { is_complete: !currentStatus }, 
         { headers: { 'Authorization': `Token ${token}` }}
       )
@@ -442,7 +444,7 @@ function App() {
 
   const handleMoveTask = async (id, newOwner) => {
     try {
-      await axios.patch(`http://127.0.0.1:8000/api/tasks/${id}/`, 
+      await axios.patch(`${API_URL}/api/tasks/${id}/`, 
         { assign_to: newOwner }, 
         { headers: { 'Authorization': `Token ${token}` }}
       )
@@ -475,7 +477,7 @@ function App() {
   const saveModalDetails = async () => {
       if (!selectedTask) return;
       try {
-          await axios.patch(`http://127.0.0.1:8000/api/tasks/${selectedTask.id}/`, 
+          await axios.patch(`${API_URL}/api/tasks/${selectedTask.id}/`, 
             { 
                 description: draftDesc, 
                 due_date: draftDate || null, 
@@ -496,7 +498,7 @@ function App() {
 
   const saveEdit = async () => {
     try {
-      await axios.patch(`http://127.0.0.1:8000/api/tasks/${editingTaskId}/`, 
+      await axios.patch(`${API_URL}/api/tasks/${editingTaskId}/`, 
         { title: editingText }, 
         { headers: { 'Authorization': `Token ${token}` }}
       )

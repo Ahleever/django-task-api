@@ -124,14 +124,33 @@ const TaskList = ({ taskList, ownerName, actions }) => {
                                 <button onClick={saveEdit} onPointerDown={(e) => e.stopPropagation()} style={{ background: 'var(--accent)', color: 'black', padding: '0 5px' }}>💾</button>
                             </div>
                         ) : (
-                            <span 
-                                className="task-title" 
-                                onClick={() => handleToggleTask(task.id, task.is_complete)}
-                                style={{ cursor: 'pointer', textDecoration: task.is_complete ? 'line-through' : 'none', flexGrow: 1, fontWeight:'500' }}
-                            >
-                                {task.is_complete ? "✅ " : "⬜ "} 
-                                {task.title}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexGrow: 1 }}>
+                              {/* 1. CHECKBOX BUTTON */}
+                              <button 
+                                  onClick={() => handleToggleTask(task.id, task.is_complete)}
+                                  onPointerDown={(e) => e.stopPropagation()} 
+                                  style={{ 
+                                      cursor: 'pointer', 
+                                      background: 'transparent', 
+                                      border: 'none', 
+                                      fontSize: '1.2rem',
+                                      padding: '0 4px',
+                                      lineHeight: '1'
+                                  }}
+                              >
+                                  {task.is_complete ? "✅" : "⬜"}
+                              </button>
+
+                              {/* 2. TASK TITLE  */}
+                              <span style={{ 
+                                  textDecoration: task.is_complete ? 'line-through' : 'none', 
+                                  fontWeight: '500',
+                                  opacity: task.is_complete ? 0.6 : 1,
+                                  color: 'inherit'
+                              }}>
+                                  {task.title}
+                              </span>
+                            </div>
                         )}
                         
                         <div style={{ display: 'flex', gap: '5px' }} onPointerDown={(e) => e.stopPropagation()}>
@@ -235,6 +254,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 // --- 3. MAIN APP COMPONENT ---
 function App() {
+  const [isLoading, setIsLoading] = useState(false);
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [token, setToken] = useState(null)
@@ -335,10 +355,12 @@ function App() {
   }
 
   const handleGuestLogin = async () => {
+    setIsLoading(true);
     const demoManager = "GuestManager";
     const demoPass = "DemoPass123";
     const emp1 = "DemoAlice";
     const emp2 = "DemoBob";
+    const emp3 = "DemoCharlie";
 
     const createEmployeeWithTasks = async (username, tasks) => {
       try {
@@ -360,7 +382,6 @@ function App() {
 
     } catch (error) {
       console.log("Seeding Demo Data...");
-      alert("Setting up the Demo Team... this takes about 5 seconds.");
 
       try {
         await createEmployeeWithTasks(emp1, [
@@ -373,6 +394,11 @@ function App() {
             { title: "Write API Docs", priority: "Low" }
         ]);
 
+        await createEmployeeWithTasks(emp3, [
+            { title: "Prepare Presentation", priority: "Medium" },
+            { title: "Update Documentation", priority: "Low" }
+        ]);
+
         await axios.post(API_URL + '/api/register/', { username: demoManager, password: demoPass });
         const res = await axios.post(API_URL + '/api-token-auth/', { username: demoManager, password: demoPass });
         const managerToken = res.data.token;
@@ -382,9 +408,14 @@ function App() {
             title: "Review Q1 Goals", priority: "High", description: "Check Alice's designs." 
         }, managerConfig);
 
+        await axios.post(API_URL + '/api/tasks/', { 
+            title: "Team Meeting", priority: "Medium", description: "Discuss project updates with Bob, Alice, and Charlie."
+        }, managerConfig);
+
         try {
-             await axios.post(API_URL + '/api/users/assign_manager/', { member: emp1, manager: demoManager }, managerConfig);
-             await axios.post(API_URL + '/api/users/assign_manager/', { member: emp2, manager: demoManager }, managerConfig);
+            await axios.post(API_URL + '/api/users/assign_manager/', { member: emp1, manager: demoManager }, managerConfig);
+            await axios.post(API_URL + '/api/users/assign_manager/', { member: emp2, manager: demoManager }, managerConfig);
+            await axios.post(API_URL + '/api/users/assign_manager/', { member: emp3, manager: demoManager }, managerConfig);
         } catch (assignError) {
              console.warn("Assignment warning:", assignError);
         }
@@ -396,6 +427,7 @@ function App() {
         alert("Could not auto-seed data. Please try registering manually.");
       }
     }
+    finally { setIsLoading(false); }
   }
 
   const logout = () => {
@@ -493,13 +525,27 @@ function App() {
   }
 
   const handleToggleTask = async (id, currentStatus) => {
+    console.log(`Attempting to toggle task ${id}...`);
+
+    const newStatus = !currentStatus;
+    setTasks(prevTasks => prevTasks.map(task => 
+        task.id === id ? { ...task, is_complete: newStatus } : task
+    ));    
+
     try {
-      await axios.patch(`${API_URL}/api/tasks/${id}/`, 
-        { is_complete: !currentStatus }, 
+      await axios.patch(API_URL + '/api/tasks/' + id + '/', 
+        { is_complete: newStatus }, 
         { headers: { 'Authorization': `Token ${token}` }}
-      )
-      fetchTasks()
-    } catch (error) { console.error("Error toggling task:", error) }
+      );
+      console.log("Server update successful!");
+      
+      fetchTasks(); 
+
+    } catch (error) { 
+        console.error("Error toggling task:", error);
+        alert("Could not update task. Check console for details.");
+        fetchTasks(); 
+    }
   }
 
   const handleMoveTask = async (id, newOwner) => {
@@ -734,6 +780,13 @@ function App() {
               />
             </div>
           </DndContext>
+        </div>
+      )}
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="spinner"></div>
+          <h2>Setting up Demo Environment...</h2>
+          <p>Creating team members, generating tasks, and assigning roles.</p>
         </div>
       )}
     </div>
